@@ -1,5 +1,4 @@
 const {
-  nativeImage,
   app,
   ipcMain,
   BrowserWindow,
@@ -13,54 +12,30 @@ const { PythonShell } = require("python-shell");
 
 // global shortcut keys
 const Hide = "CommandOrControl+E";
+
 let screenshot_name = null;
 let screenshot_count = 1;
 
-WIN = null;
-Independent_Win = {};
+let mainWindow = null;
+let childWindow = null;
+let animate_speed = 0.01;
 
 console.log(`---------------------new----------`);
 
 // -----------------------------------------------snipping tool
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-const fade_in = async (window = null) => {
-  if (window === null && !window.isDestroyed()) return;
-
-  for (let i = 0.0; i <= 0.65; i += 0.05) {
-    window.setOpacity(i);
-    await sleep(20);
-  }
-};
-
-const fade_out = async (window = null) => {
-  if (window === null || window.isDestroyed()) return;
-
-  for (let i = 0.65; i >= 0.0; i -= 0.05) {
-    window.setOpacity(i);
-    await sleep(20);
-  }
-};
 
 const createWindow = () => {
-  screenshot_count += 1;
-  screenshot_name = `ScreenShot_${screenshot_count}`;
-
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     resizable: false,
     movable: false,
-    // fullscreen: true,
-    // fullscreenable: true,
-    // show: false,
-
     alwaysOnTop: true,
-    frame: false,
+
     backgroundColor: "hsla(0, 0%, 10%, 1)",
+
+    show: false,
     transparent: true,
-    // opacity: .65,
-    // opacity: 0.0,
+    frame: false,
+    opacity: 0,
     skipTaskbar: true,
 
     webPreferences: {
@@ -70,123 +45,79 @@ const createWindow = () => {
     },
   });
 
-  // mainWindow.on("closed", ()=>{
-  // })
-
   mainWindow.loadFile("./src/html/main.html");
-  // mainWindow.webContents.openDevTools({ mode: 'bottom' })
-  // mainWindow.webContents.openDevTools()
-
-  // mainWindow.setFullScreen(true)
   mainWindow.maximize();
 
-  // clearTimeout()
-  // setTimeout(()=>{
-  //   mainWindow.restore()
-  // }, 5000)
+  mainWindow.on("ready-to-show", () => {
+    mainWindow.show();
+    let opacity = 0;
+    const max_opacity = 0.4;
 
-  return mainWindow;
+    const interval = setInterval(() => {
+      opacity += animate_speed;
+      if (opacity >= max_opacity) {
+        clearInterval(interval);
+      }
+
+      mainWindow.setOpacity(opacity);
+    }, 10);
+  });
+
+  mainWindow.on("close", (event) => {
+    event.preventDefault();
+    Close_Window();
+  });
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
 };
 
 // ----------------------------------------------------childwindow
 
-// const imagePath = path.join(__dirname, 'path', 'to', 'image.png')
-// const image = nativeImage.createFromPath(path_)
-
-const childWindow_ = (window_data) => {
-  // const createWindow = ()=>{
-
+const create_childWindow_ = (window_data) => {
   const { _width_, _height_ } = window_data;
 
-  // console.log(`screenShot is taken of width: ${_width_} and height: ${_height_}`)
   childWindow = new BrowserWindow({
     alwaysOnTop: true,
     width: _width_,
-    height: _height_ + 60,
+    height: _height_ + 50,
 
     webPreferences: {
       preload: path.join(__dirname, "\\src\\preload\\image_preload.js"),
-      nodeIntegration: true,
+      nodeIntegration: false,
       contextIsolation: true,
-      images: true,
-      //--------- default: true
-      // contextIsolation: true,
-      // devTools: true,
-      // javascript: true,
     },
 
     frame: false,
     backgroundColor: "hsla(0, 0%, 10%, 1)",
-    resizable: false,
+    resizable: true,
     movable: true,
-    // transparent: true,
-    // opacity: 0.90,
   });
 
   childWindow.loadFile("./src/html/image.html");
-  // childWindow.webContents.openDevTools()
-
-  //   ipcMain.on('close_btn', (e)=>{
-  //   console.log("close")
-  //   // app.quit()
-  //   childWindow.close()
-  //   // mainWindow.destroy()
-  // })
-
-  // ipcMain.on('min_btn', (e)=>{
-  //   console.log("minimize")
-  //   childWindow.minimize()
-  //   childWindow.setFullScreen(false)
-  // })
-
-  // ipcMain.on('max_btn', (e)=>{
-  //   if (childWindow.isMaximized())
-  //   {
-  //     // console.log("restore")
-  //     childWindow.unmaximize()
-  //   }
-  //   else
-  //   {
-  //     // childWindow.setFullScreen(true)
-  //     childWindow.maximize()
-  //     // console.log("maximize")
-  //   }
-
-  //   // mainWindow.setSimpleFullScreen(true)
-  //   // console.log(childWindow.isMaximized())
-  // })
 
   childWindow.webContents.on("did-finish-load", () => {
-    console.log("ready to load image");
-    // childWindow.webContents.send('image-loaded', image.toDataURL())
     childWindow.webContents.send("image-loaded", window_data);
   });
 
   childWindow.on("closed", () => {
-    console.log("window is closed");
+    childWindow = null;
   });
 };
 
+// ---------------------------------------------app-events
 // -------------------------------app is ready
 
 app.whenReady().then(() => {
   // Register a 'CommandOrControl+X' shortcut listener.
   const ret = globalShortcut.register(Hide, () => {
-    console.log(`${Hide} is pressed`);
-
-    if (WIN === null || WIN.isDestroyed()) {
-      WIN = createWindow();
-      fade_in(WIN);
-      console.log("window is created");
-    }
-    // else if(!WIN.isVisible()){
-    //   WIN.show()
-    // }
+    if (mainWindow == null) createWindow();
   });
 
-  if (!ret) {
-    console.log("registration failed");
-  }
+  // if (!ret) {
+  //   console.log("registration failed");
+  // }
 
   // Check whether a shortcut is registered.
   console.log(
@@ -197,17 +128,14 @@ app.whenReady().then(() => {
 
   //re-create a window when the dock icon is clicked and there are no other windows open
   app.on("activate", function () {
-    console.log("window is activated");
     if (BrowserWindow.getAllWindows().length === 0) {
-      WIN = createWindow();
+      createWindow();
     }
   });
 
   // ----------------------------system-tray
-  const ico_path =
-    "P:/PROGRAMMING/Projects/night projects/python projects/icons/Instagram.ico";
-  // const ico = nativeImage.
-  const tray = new Tray(ico_path);
+
+  const tray = new Tray(path.join(__dirname, "\\public\\tray.ico"));
 
   const contextMenu = Menu.buildFromTemplate([
     { label: "Show", accelerator: Hide },
@@ -219,45 +147,28 @@ app.whenReady().then(() => {
   tray.setContextMenu(contextMenu);
 });
 
-// ------------------------------------------------window-all-closed
-
 app.on("window-all-closed", function () {
   if (process.platform !== "darwin") {
-    console.log("last window is quiting");
-    console.log(BrowserWindow.getAllWindows.length);
     // app.quit()
   }
 });
 
-// ----------------------------------------will-quit
+// ------------------will-quit
 
 app.on("will-quit", () => {
-  console.log("\n------------------saving everything---------");
-
-  if (WIN !== null && !WIN.isDestroyed()) {
-    console.log("window is still opened");
-    WIN.close();
-  }
-
   // Unregister a shortcut.
-  console.log("unregistered key");
   globalShortcut.unregister(Hide);
 
   // Unregister all shortcuts.
   globalShortcut.unregisterAll();
 });
 
-// --------------------------------------------IPC
-
-ipcMain.on("fade_out:", (event) => {
-  console.log("fade out");
-  // console.log(window)
-  fade_out(WIN);
+// --------------------------------------------IPC - mainWindow
+ipcMain.on("Close-MainWindow:", () => {
+  Close_Window();
 });
 
 ipcMain.on("take_screenShot:", (event, window_details) => {
-  console.log(`screenshot is taken`);
-
   screenshot_name = `Screenshot_${screenshot_count}.jpg`;
   const path_ = path.join(
     __dirname,
@@ -266,19 +177,45 @@ ipcMain.on("take_screenShot:", (event, window_details) => {
   window_details["path_"] = path_;
 
   SCREENSHOT(window_details);
-
-  console.log(`show image at ${path_}`);
-  screenshot_count += 1;
 });
 
+// --------------------------------------------IPC - childWindow
+
+ipcMain.on("Maximize:child", () => {
+  if (!childWindow.isMaximized()) {
+    childWindow.maximize();
+  } else {
+    childWindow.restore();
+  }
+});
+
+ipcMain.on("Minimize:child", () => {
+  childWindow.minimize();
+});
+
+// ----------------------------------------------functions
+function wait(ms) {
+  const start = new Date().getTime();
+  while (new Date().getTime() - start < ms) {}
+}
+
+const Close_Window = () => {
+  let opacity = mainWindow.getOpacity();
+  const min_opacity = 0;
+
+  for (let i = opacity - animate_speed; i >= min_opacity; i -= animate_speed) {
+    mainWindow.setOpacity(i);
+    wait(10);
+  }
+
+  mainWindow.destroy();
+};
+
 const SCREENSHOT = (data) => {
-  const { x1, y1, x2, y2, path_, _width_, _height_ } = data;
-  console.log(`${x2 - x1} ${y2 - y1} width: ${_width_}, height: ${_height_}`);
-  console.log(`path: ${path_}`);
+  const { x1, y1, x2, y2, path_ } = data;
 
   options = {
     // mode: 'text',
-    // pyhtonPath: "P:\\PROJECT_VENV\\PYAUTO_GUI\\Scripts\\python.exe",
     pythonOptions: ["-u"],
     scriptPath: "./BackgroundProcess/",
     args: [x1, y1, x2, y2, path_],
@@ -286,16 +223,11 @@ const SCREENSHOT = (data) => {
 
   const pyshell = new PythonShell("snapShot.py", options);
 
-  // pyshell.on("message", (result)=>{
-  //   console.log('result')
-  // })
-
   pyshell.end(function (err) {
     if (err) throw err;
-    console.log("finished");
 
     // show screenshot taken after taking
-
-    childWindow_(data);
+    create_childWindow_(data);
+    screenshot_count += 1;
   });
 };

@@ -25,11 +25,11 @@ const close = (event) => {
 };
 
 const minimize = (event) => {
-  // window.image_action.min()
+  ipcRenderer.send("Minimize:child");
 };
 
 const maximize = (event) => {
-  // window.image_action.max()
+  ipcRenderer.send("Maximize:child");
 };
 
 // ----------------------

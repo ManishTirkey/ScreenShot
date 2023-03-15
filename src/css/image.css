@@ -76,36 +76,6 @@
   height: 100%;
 }
 
-/* .custom-draggble-area .title{
-  display: inline-block;
-  color: rgb(228, 213, 213);
-  font-family: ubuntu;
-  font-weight: 700;
-  word-spacing: 8px;
-  letter-spacing: 2px;
-  font-size: 18px;
-} */
-/* 
-.done{
-  margin-right: 20px;
-  width: 4rem;
-  height: 70%;
-}
-
-.done button
-{
-  width: 100%;
-  height: 100%;
-  border-radius: 5px;
-  border: none;
-  cursor: grab;
-  background-color: rgb(145, 146, 155);
-  text-transform: uppercase;
-  font-family: Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  color: rgb(255, 255, 255);
-  font-weight: bolder;
-} */
-
 .image_wrapper {
   overflow: hidden;
   /* border: 2px solid red; */
