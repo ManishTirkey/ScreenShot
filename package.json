@@ -1,0 +1,17 @@
+{
+  "name": "snapshot",
+  "version": "1.0.0",
+  "description": "Increases your daily work.",
+  "main": "./main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Manish Tirkey",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^23.1.2"
+  },
+  "dependencies": {
+    "python-shell": "^5.0.0"
+  }
+}

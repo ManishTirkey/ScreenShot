@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    />
+    <link href="../css/image.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="draggble-area-wrapper">
+      <div class="btns">
+        <button class="close btn" id="close_btn"></button>
+        <button class="min btn" id="min_btn"></button>
+        <button class="max btn" id="max_btn"></button>
+      </div>
+
+      <div class="custom-draggble-area">
+        <!-- <div class="title">Your ScreenShot💻</div> -->
+      </div>
+
+      <!-- <div class="done">
+        <button id="done">done</button>
+      </div>
+    </div> -->
+
+    <div class="image_wrapper" id="image_wrapper">
+      <div class="image", id="image">
+        <img id="img" />
+      </div>
+    </div>
+
+    <script src="../renderer_js/image_renderer.js"></script>
+  </body>
+</html>

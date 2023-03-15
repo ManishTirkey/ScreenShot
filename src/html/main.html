@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    />
+    <link href="../css/main.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="menus" id="menus">
+      <div class="btns" id="btns">
+        <div class="rectangle-snip btn"><div></div></div>
+        <div class="rectangle-snip btn"><div></div></div>
+        <div class="rectangle-snip btn"><div></div></div>
+        <div class="rectangle-snip btn"><div></div></div>
+        <div class="seperator"></div>
+        <div class="close btn" id="close_btn">x</div>
+      </div>
+    </div>
+
+    <div class="screen-wrapper">
+      <canvas class="screen" id="SCREEN"> </canvas>
+    </div>
+
+    <script src="../renderer_js/main_renderer.js"></script>
+  </body>
+</html>
