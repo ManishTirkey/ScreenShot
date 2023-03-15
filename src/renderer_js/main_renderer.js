@@ -40,9 +40,11 @@ window.addEventListener("load", () => {
 });
 
 // ------------------------restricted-area in pixels
+const screen_ = screen.availWidth / 2;
+const btn_w = btns.clientWidth / 2;
 
 const restricted_area = () => {
-  restricted_X = Math.ceil(1366 / 2 - btns.clientWidth / 2);
+  restricted_X = Math.ceil(screen_ - btn_w);
   restricted_X2 = Math.ceil(restricted_X + btns.clientWidth);
   restricted_h = btns.clientHeight;
 };
