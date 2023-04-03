@@ -109,6 +109,10 @@ const create_childWindow_ = (window_data) => {
 // ---------------------------------------------app-events
 // -------------------------------app is ready
 
+app.on("browser-window-focus", () => {
+  childWindow = BrowserWindow.getFocusedWindow();
+});
+
 app.whenReady().then(() => {
   // Register a 'CommandOrControl+X' shortcut listener.
   const ret = globalShortcut.register(Hide, () => {
