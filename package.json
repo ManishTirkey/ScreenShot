@@ -1,17 +1,18 @@
 {
-  "name": "snapshot",
-  "version": "1.0.0",
-  "description": "Increases your daily work.",
+  "name": "hallowed-speech-manufacture-86w2q",
+  "productName": "hallowed-speech-manufacture-86w2q",
+  "description": "My Electron application description",
+  "keywords": [],
   "main": "./main.js",
+  "version": "1.0.0",
+  "author": "asdma",
   "scripts": {
     "start": "electron ."
   },
-  "author": "Manish Tirkey",
-  "license": "MIT",
-  "devDependencies": {
-    "electron": "^23.1.2"
-  },
   "dependencies": {
-    "python-shell": "^5.0.0"
+    "python-shell": "5.0.0"
+  },
+  "devDependencies": {
+    "electron": "23.1.2"
   }
 }
