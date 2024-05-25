@@ -51,7 +51,7 @@ const createWindow = () => {
   mainWindow.on("ready-to-show", () => {
     mainWindow.show();
     let opacity = 0;
-    const max_opacity = 0.5;
+    const max_opacity = 0.6;
 
     const interval = setInterval(() => {
       opacity += animate_speed;
