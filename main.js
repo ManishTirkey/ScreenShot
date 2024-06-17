@@ -82,6 +82,7 @@ const create_childWindow_ = (window_data) => {
     alwaysOnTop: true,
     width: _width_,
     height: _height_ + 50,
+    icon: "./public/tray.ico",
 
     webPreferences: {
       preload: path.join(__dirname, "\\src\\preload\\image_preload.js"),
