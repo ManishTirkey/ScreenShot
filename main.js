@@ -6,8 +6,10 @@ const {
   Tray,
   Menu,
 } = require("electron");
-const path = require("path");
+const { dialog } = require("electron");
 
+const path = require("path");
+const { spawn } = require("child_process");
 const { PythonShell } = require("python-shell");
 
 // global shortcut keys
@@ -76,7 +78,18 @@ const createWindow = () => {
 // ----------------------------------------------------childwindow
 
 const create_childWindow_ = (window_data) => {
-  const { _width_, _height_ } = window_data;
+  const { _width_, _height_, path_ } = window_data;
+
+  // Add debugging to verify the path
+  // console.log("Screenshot path:", path_);
+  
+  // Check if file exists before proceeding
+  const fs = require('fs');
+  if (!fs.existsSync(path_)) {
+    // console.error(`Screenshot file not found at: ${path_}`);
+    dialog.showErrorBox('Error', `Screenshot file not found at: ${path_}`);
+    return;
+  }
 
   childWindow = new BrowserWindow({
     alwaysOnTop: true,
@@ -96,9 +109,10 @@ const create_childWindow_ = (window_data) => {
     movable: true,
   });
 
-  childWindow.loadFile("./src/html/image.html");
+  childWindow.loadFile(path.join(__dirname, "src/html/image.html"));
 
   childWindow.webContents.on("did-finish-load", () => {
+    // Add debugging
     childWindow.webContents.send("image-loaded", window_data);
   });
 
@@ -219,20 +233,57 @@ const Close_Window = () => {
 const SCREENSHOT = (data) => {
   const { x1, y1, x2, y2, path_ } = data;
 
-  options = {
-    // mode: 'text',
-    pythonOptions: ["-u"],
-    scriptPath: "./BackgroundProcess/",
-    args: [x1, y1, x2, y2, path_],
-  };
+  // Fix path resolution for packaged app
+  let exePath;
+  if (app.isPackaged) {
+    exePath = path.join(process.resourcesPath, "BackgroundProcess");
+  } else {
+    exePath = path.join(__dirname, "BackgroundProcess");
+  }
 
-  const pyshell = new PythonShell("snapShot.py", options);
+  // Ensure Screenshots directory exists
+  const screenshotsDir = path.dirname(path_);
+  const fs = require('fs');
+  if (!fs.existsSync(screenshotsDir)) {
+    fs.mkdirSync(screenshotsDir, { recursive: true });
+  }
 
-  pyshell.end(function (err) {
-    if (err) throw err;
+  // -----------------------spawn
 
-    // show screenshot taken after taking
-    create_childWindow_(data);
-    screenshot_count += 1;
+  const pythonExePath = path.join(exePath, "snapShot.exe");
+  const args = [x1, y1, x2, y2, path_];
+
+  const pythonProcess = spawn(pythonExePath, args);
+
+  // pythonProcess.stdout.on('data', (data) => {
+  //   console.log(`Python stdout: ${data}`);
+  // });
+
+  // pythonProcess.stderr.on('data', (data) => {
+  //   console.error(`Python stderr: ${data}`);
+  // });
+
+  pythonProcess.on("error", (error) => {
+    console.error(`Failed to start Python process: ${error}`);
+    dialog.showErrorBox('Error', `Failed to start Python process: ${error.message}`);
+  });
+
+  pythonProcess.on("close", (code) => {
+    if (code === 0) {
+      // console.log("Python process completed successfully");
+      
+      // Verify file exists before creating child window
+      if (fs.existsSync(path_)) {
+        // console.log("Screenshot file created successfully");
+        create_childWindow_(data);
+        screenshot_count += 1;
+      } else {
+        // console.error("Screenshot file was not created at:", path_);
+        dialog.showErrorBox('Error', `Screenshot file was not created at: ${path_}`);
+      }
+    } else {
+      // console.error(`Python process exited with code ${code}`);
+      dialog.showErrorBox('Error', `Python process exited with code ${code}`);
+    }
   });
 };
