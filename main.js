@@ -12,6 +12,8 @@ const path = require("path");
 const { spawn } = require("child_process");
 const { PythonShell } = require("python-shell");
 
+const { v4: uuidv4 } = require("uuid");
+
 // global shortcut keys
 const Hide = "CommandOrControl+E";
 
@@ -21,8 +23,6 @@ let screenshot_count = 1;
 let mainWindow = null;
 let childWindow = null;
 let animate_speed = 0.01;
-
-console.log(`---------------------new----------`);
 
 // -----------------------------------------------snipping tool
 
@@ -80,14 +80,10 @@ const createWindow = () => {
 const create_childWindow_ = (window_data) => {
   const { _width_, _height_, path_ } = window_data;
 
-  // Add debugging to verify the path
-  // console.log("Screenshot path:", path_);
-  
   // Check if file exists before proceeding
-  const fs = require('fs');
+  const fs = require("fs");
   if (!fs.existsSync(path_)) {
-    // console.error(`Screenshot file not found at: ${path_}`);
-    dialog.showErrorBox('Error', `Screenshot file not found at: ${path_}`);
+    dialog.showErrorBox("Error", `Screenshot file not found at: ${path_}`);
     return;
   }
 
@@ -116,8 +112,10 @@ const create_childWindow_ = (window_data) => {
     childWindow.webContents.send("image-loaded", window_data);
   });
 
-  childWindow.on("closed", () => {
+  childWindow.on("closed", async () => {
     childWindow = null;
+    const { path_ } = window_data;
+    await fs.promises.unlink(path_);
   });
 };
 
@@ -134,12 +132,12 @@ app.whenReady().then(() => {
     if (mainWindow == null) createWindow();
   });
 
-  // if (!ret) {
-  //   console.log("registration failed");
-  // }
+  if (!ret) {
+    console.error("registration failed");
+  }
 
   // Check whether a shortcut is registered.
-  console.log(
+  console.info(
     `globalShortcutkey [${Hide}]: ${
       globalShortcut.isRegistered(Hide) ? "is registered" : "is not registered"
     }`
@@ -187,13 +185,11 @@ ipcMain.on("Close-MainWindow:", () => {
   Close_Window();
 });
 
-ipcMain.on("take_screenShot:", (event, window_details) => {
-  screenshot_name = `Screenshot_${screenshot_count}.jpg`;
-  const path_ = path.join(
-    __dirname,
-    `\\public\\Screenshots\\${screenshot_name}`
-  );
-  window_details["path_"] = path_;
+ipcMain.on("take_screenShot:", async (event, window_details) => {
+  screenshot_name = `${uuidv4()}.png`;
+
+  const screenshot_path = path.join(app.getPath("temp"), screenshot_name);
+  window_details["path_"] = screenshot_path;
 
   SCREENSHOT(window_details);
 });
@@ -243,7 +239,7 @@ const SCREENSHOT = (data) => {
 
   // Ensure Screenshots directory exists
   const screenshotsDir = path.dirname(path_);
-  const fs = require('fs');
+  const fs = require("fs");
   if (!fs.existsSync(screenshotsDir)) {
     fs.mkdirSync(screenshotsDir, { recursive: true });
   }
@@ -265,25 +261,22 @@ const SCREENSHOT = (data) => {
 
   pythonProcess.on("error", (error) => {
     console.error(`Failed to start Python process: ${error}`);
-    dialog.showErrorBox('Error', `Failed to start Python process: ${error.message}`);
+    dialog.showErrorBox(
+      "Error",
+      `Failed to start Python process: ${error.message}`
+    );
   });
 
   pythonProcess.on("close", (code) => {
     if (code === 0) {
-      // console.log("Python process completed successfully");
-      
       // Verify file exists before creating child window
       if (fs.existsSync(path_)) {
-        // console.log("Screenshot file created successfully");
         create_childWindow_(data);
-        screenshot_count += 1;
       } else {
-        // console.error("Screenshot file was not created at:", path_);
-        dialog.showErrorBox('Error', `Screenshot file was not created at: ${path_}`);
+        dialog.showErrorBox("Error", `Error on Path ${path_}`);
       }
     } else {
-      // console.error(`Python process exited with code ${code}`);
-      dialog.showErrorBox('Error', `Python process exited with code ${code}`);
+      dialog.showErrorBox("Error", `Python process exited with code ${code}`);
     }
   });
 };
