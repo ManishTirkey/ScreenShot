@@ -3,7 +3,6 @@ out
 /public/Screenshots
 dist/
 
-
 .DS_Store
 .env
 .gclient_done
